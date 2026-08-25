@@ -1,6 +1,6 @@
 name: contract-sync
 
-# The quotes contract under contracts/ is a snapshot of net-examples' frozen
+# The quotes contract under contracts/ is a snapshot of code.examples.net.quotes' frozen
 # document (docs/openapi/quotes-v1.openapi.yaml). This workflow is the snapshot's
 # tripwire: a scheduled job diffs the committed copy against the backend
 # repository's public raw URL — an HTTP read, deliberately not a submodule, so the
@@ -26,11 +26,11 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  UPSTREAM_URL: https://raw.githubusercontent.com/josnelihurt/net-examples/main/docs/openapi/quotes-v1.openapi.yaml
+  UPSTREAM_URL: https://raw.githubusercontent.com/josnelihurt/code.examples.net.quotes/main/docs/openapi/quotes-v1.openapi.yaml
 
 jobs:
   drift:
-    name: contract drift vs net-examples
+    name: contract drift vs code.examples.net.quotes
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -42,10 +42,10 @@ jobs:
         run: |
           set -euo pipefail
           if diff -u contracts/quotes-v1.openapi.yaml /tmp/upstream.openapi.yaml; then
-            echo "The snapshot matches net-examples' frozen contract."
+            echo "The snapshot matches code.examples.net.quotes' frozen contract."
             exit 0
           fi
-          echo "::error::contracts/quotes-v1.openapi.yaml no longer matches net-examples' frozen document."
+          echo "::error::contracts/quotes-v1.openapi.yaml no longer matches code.examples.net.quotes' frozen document."
           echo "Run this workflow again with the sync input enabled: it refreshes the"
           echo "snapshot, regenerates src/api/schema.d.ts and opens the sync PR for review."
           exit 1
@@ -103,6 +103,6 @@ jobs:
           git push origin "$branch"
           gh pr create \
             --title "chore: sync the quotes contract snapshot" \
-            --body "The frozen quotes contract in [net-examples](https://github.com/josnelihurt/net-examples) moved; this refreshes the snapshot under \`contracts/\` and regenerates \`src/api/schema.d.ts\` from it. Opened automatically by the contract-sync workflow (manual dispatch). Review the contract diff, then label \`merge-me\` to land it." \
+            --body "The frozen quotes contract in [code.examples.net.quotes](https://github.com/josnelihurt/code.examples.net.quotes) moved; this refreshes the snapshot under \`contracts/\` and regenerates \`src/api/schema.d.ts\` from it. Opened automatically by the contract-sync workflow (manual dispatch). Review the contract diff, then label \`merge-me\` to land it." \
             --base main \
             --head "$branch"

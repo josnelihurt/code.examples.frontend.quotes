@@ -1,7 +1,7 @@
 import type { QuoteResponse } from '../api/client';
 
 /**
- * The catalog and accounts the backend seed ships (net-examples: QuotesSeed.cs and
+ * The catalog and accounts the backend seed ships (code.examples.net.quotes: QuotesSeed.cs and
  * the local development users). The mocked API starts from exactly this state so
  * unit tests, Storybook and the mocked e2e suite all page through the same eight
  * quotes at five per page that the full-stack suite asserts on.

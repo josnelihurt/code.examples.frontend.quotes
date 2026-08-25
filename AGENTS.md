@@ -8,22 +8,22 @@ lands reviewable. The full conventions reference is
 ## What this repository is
 
 The Aspire Quotes SPA: React + TypeScript on Vite, contract-first, MSW-mocked.
-It is consumed by [net-examples](https://github.com/josnelihurt/net-examples)
+It is consumed by [code.examples.net.quotes](https://github.com/josnelihurt/code.examples.net.quotes)
 as a **git submodule pinned by commit, mounted at `frontend/`**. Two rules
 follow from that:
 
-- **Never add a submodule back to net-examples** (or any backend repository).
+- **Never add a submodule back to code.examples.net.quotes** (or any backend repository).
   The only cross-repo dependency allowed is the read-only public raw URL of
-  net-examples' frozen OpenAPI document, consumed by the contract-sync
+  code.examples.net.quotes' frozen OpenAPI document, consumed by the contract-sync
   machinery. A submodule the other way would recurse.
-- **The pinned pointer moves via pull request in net-examples**, never from
+- **The pinned pointer moves via pull request in code.examples.net.quotes**, never from
   here. Landing on `main` here does not change what the backend runs until
   that repository bumps its pin.
 
 Testing topology: unit tests and the default e2e suite run against MSW mocks
 (`pnpm test`, `pnpm run test:e2e`) — no backend, no database, fully
 self-contained. The full-stack e2e suite (real APIs + PostgreSQL) runs from a
-net-examples checkout via `pnpm run test:e2e:fullstack`; do not try to make it
+code.examples.net.quotes checkout via `pnpm run test:e2e:fullstack`; do not try to make it
 work standalone, it boots `dotnet` binaries from the parent tree by design.
 
 ## Big changes land as stacked pull requests

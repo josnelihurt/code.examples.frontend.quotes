@@ -1,6 +1,6 @@
 # pnpm as the package manager
 
-Decision note (2026-08-22, carried over from the net-examples monorepo this
+Decision note (2026-08-22, carried over from the code.examples.net.quotes monorepo this
 repository was extracted from). The question: the JavaScript toolchain ran on
 npm — install, scripts, CI. After the 2025–2026 wave of npm supply-chain
 incidents, is npm still the right default, and if not what replaces it? This
@@ -64,14 +64,14 @@ The quickstart and the scripts table live in [README.md](../README.md).
 ## Decision and revisit trigger
 
 **2026-08-22 — researched and migrated in one change.** The research happened in
-the net-examples monorepo and the migration is native history here: PR #3
-(`ef2955e`, "chore: replace npm with pnpm across the toolchain and ci") — the
+the code.examples.net.quotes monorepo and the migration is native history here:
+(`6158288`, "chore: replace npm with pnpm across the toolchain and ci") — the
 filter-repo extraction carried it into this repository's first commits.
 Rollback is a single revert — `package-lock.json` returns from git history.
 
 **Revisit when:** a supply-chain policy stricter than the defaults above becomes
 necessary (`trustPolicy`, one-week quarantine), or Aspire's JavaScript
-integration (in [net-examples](https://github.com/josnelihurt/net-examples))
+integration (in [code.examples.net.quotes](https://github.com/josnelihurt/code.examples.net.quotes))
 changes its package-manager handling.
 
 ## Sources

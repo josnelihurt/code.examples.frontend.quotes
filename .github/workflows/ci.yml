@@ -98,7 +98,7 @@ jobs:
       - run: pnpm run build
 
       # The SPA's API types are generated from the contract copy under contracts/ —
-      # a snapshot of net-examples' frozen docs/openapi document. Regenerate and
+      # a snapshot of code.examples.net.quotes' frozen docs/openapi document. Regenerate and
       # fail if the committed schema drifted from that copy.
       - run: pnpm run gen:api
       - run: git diff --exit-code src/api/schema.d.ts
@@ -108,7 +108,7 @@ jobs:
 
   # The default e2e suite: the SPA against the MSW mock platform — no backend, no
   # database, nothing outside this repository. The full-stack journeys (real APIs
-  # + PostgreSQL) run from a net-examples checkout, where both trees coexist.
+  # + PostgreSQL) run from a code.examples.net.quotes checkout, where both trees coexist.
   e2e:
     name: e2e (mocked, Playwright + playwright-bdd)
     runs-on: ubuntu-latest
@@ -137,7 +137,7 @@ jobs:
 
   # Ungated on purpose: the grep covers the whole tree and costs seconds. The seed
   # catalog's scaffolding credentials belong to the backend repository's seed
-  # (net-examples docs/dev-credentials.md); here they may appear only in tests,
+  # (code.examples.net.quotes docs/dev-credentials.md); here they may appear only in tests,
   # e2e journeys, the MSW fixtures that stand in for that seed, and the agent
   # instructions that operate those fixtures (same operational lane as tests).
   secrets-hygiene:

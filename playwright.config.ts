@@ -3,7 +3,7 @@ import { defineBddConfig } from 'playwright-bdd';
 
 // The default e2e suite: the real SPA against the MSW mock platform — no backend,
 // no database, nothing outside this repository. The same feature files also run
-// full-stack from a net-examples checkout (playwright.fullstack.config.ts); the
+// full-stack from a code.examples.net.quotes checkout (playwright.fullstack.config.ts); the
 // steps are shared, so journeys stay identical across both.
 const testDir = defineBddConfig({
   features: 'e2e/features/**/*.feature',

@@ -1,4 +1,4 @@
-# net-examples-frontend
+# code.examples.frontend.quotes
 
 The Aspire Quotes SPA: a small React application that signs in against the Auth API
 and exercises the Quotes API from the outside — a random quote, the paginated
@@ -9,13 +9,13 @@ quote transports — not to demonstrate front-end architecture.
 This repository is **frontend-focused and self-contained**: it carries its own CI,
 its own conventions, its own mock platform, and a snapshot of the API contract. The
 .NET side of the system lives in
-[net-examples](https://github.com/josnelihurt/net-examples), which consumes this
+[code.examples.net.quotes](https://github.com/josnelihurt/code.examples.net.quotes), which consumes this
 repository as a **git submodule pinned by commit, mounted at `frontend/`**.
 
 ## The two-repository topology
 
 ```
-net-examples (.NET)                          this repository (SPA)
+code.examples.net.quotes (.NET)                          this repository (SPA)
 ├── src/ AppHost, Auth, Quotes               ├── src/            React + TypeScript on Vite
 ├── tests/ BDD specs, architecture tests     ├── e2e/            playwright-bdd journeys
 ├── docs/openapi/*.yaml   contract truth     ├── contracts/      frozen snapshot of that document
@@ -26,10 +26,10 @@ net-examples (.NET)                          this repository (SPA)
 Two rules keep the pair healthy:
 
 - **Never a submodule the other way.** This repository's only dependency on
-  net-examples is the public read-only raw URL of its frozen OpenAPI document,
+  code.examples.net.quotes is the public read-only raw URL of its frozen OpenAPI document,
   consumed by the contract-sync tripwire — a repository cycle is impossible by
   construction.
-- **The pin moves via pull request in net-examples.** Landing on `main` here does
+- **The pin moves via pull request in code.examples.net.quotes.** Landing on `main` here does
   not change what the backend runs until that repository bumps its submodule
   pointer — an explicit, reviewable step.
 
@@ -44,13 +44,13 @@ pnpm run dev:mock        # SPA + MSW mock platform at http://localhost:5173 — 
 `dev:mock` is the default development flow: the app boots the MSW worker before
 first render (`src/main.tsx`), and every API journey is served by the mock
 platform — the seeded eight-quote catalog and the two development accounts
-(scaffolding credentials from the backend seed, documented in net-examples'
+(scaffolding credentials from the backend seed, documented in code.examples.net.quotes'
 dev-credentials page; the mock layer accepts exactly those).
 
 Plain `pnpm run dev` runs the SPA without mocks and proxies `/api/*` to the
 `AUTH_API_HTTP(S)` / `QUOTES_API_HTTP(S)` targets — the environment Aspire's
 `AddViteApp(...).WithReference(...)` injects when the SPA runs inside the
-net-examples checkout. Standalone, export those variables yourself or use
+code.examples.net.quotes checkout. Standalone, export those variables yourself or use
 `dev:mock`.
 
 ## Stack
@@ -68,7 +68,7 @@ net-examples checkout. Standalone, export those variables yourself or use
 
 ## The contract
 
-`contracts/quotes-v1.openapi.yaml` is this repository's snapshot of net-examples'
+`contracts/quotes-v1.openapi.yaml` is this repository's snapshot of code.examples.net.quotes'
 frozen `docs/openapi/quotes-v1.openapi.yaml`. `pnpm run gen:api` generates
 `src/api/schema.d.ts` from the snapshot and CI fails on drift between the two.
 The [contract-sync](.github/workflows/contract-sync.yml) workflow guards the
@@ -88,7 +88,7 @@ fingerprint guard, the read-only scope, and the RFC 9457 problem envelope.
 | --- | --- | --- |
 | Unit | `pnpm test` | MSW Node server (`onUnhandledRequest: 'error'`) |
 | Browser journeys (default) | `pnpm run test:e2e` | real SPA in chromium, MSW worker — no backend, no database |
-| Browser journeys (full-stack) | `pnpm run test:e2e:fullstack` | real Auth + Quotes APIs + throwaway PostgreSQL — **from a net-examples checkout** (`scripts/e2e.sh` there) |
+| Browser journeys (full-stack) | `pnpm run test:e2e:fullstack` | real Auth + Quotes APIs + throwaway PostgreSQL — **from a code.examples.net.quotes checkout** (`scripts/e2e.sh` there) |
 | Component workshop | `pnpm run storybook` / `pnpm run build-storybook` | pure-props stories; the mock worker is wired for future flows |
 
 The feature files and step definitions are shared by both e2e modes, so the same
@@ -134,5 +134,5 @@ git push --force-with-lease origin <branch>
 ```
 
 The next event re-evaluates and merge-me lands the layer.
-[net-examples' README](https://github.com/josnelihurt/net-examples#the-squash-merge-stack-wedge)
+[code.examples.net.quotes' README](https://github.com/josnelihurt/code.examples.net.quotes#the-squash-merge-stack-wedge)
 carries the full write-up.

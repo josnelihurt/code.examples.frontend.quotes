@@ -65,7 +65,7 @@ Bad:
 update stuff                        — no type
 feat: Add capital summary           — summary must start lowercase
 fix: ends with period.              — no trailing period
-docs: document the workflow (#17)   — (#N) belongs to merged commits only
+docs: document the workflow           — no issue or pull-request trailers
 ```
 
 ## Enforcement

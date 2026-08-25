@@ -3,13 +3,13 @@ import { defineConfig, devices } from '@playwright/test';
 import { defineBddConfig } from 'playwright-bdd';
 
 // This is the full-stack suite: it boots the real Auth and Quotes APIs and a
-// throwaway PostgreSQL, all of which live in the net-examples checkout this
+// throwaway PostgreSQL, all of which live in the code.examples.net.quotes checkout this
 // repository is mounted into as `frontend/` (its scripts/e2e.sh orchestrates the
 // run). Standalone, use the mocked default instead: `pnpm run test:e2e`.
 const authDll = new URL('../src/Auth/Auth.Api/bin/Release/net10.0/Auth.Api.dll', import.meta.url);
 if (!existsSync(authDll)) {
   throw new Error(
-    'The full-stack e2e suite needs the net-examples checkout around this repository ' +
+    'The full-stack e2e suite needs the code.examples.net.quotes checkout around this repository ' +
       '(it boots the Release DLLs and scripts/e2e.env from the parent tree). ' +
       'Run it from that checkout via scripts/e2e.sh, or `pnpm run test:e2e` for the mocked suite.',
   );
