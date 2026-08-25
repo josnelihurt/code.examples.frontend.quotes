@@ -20,8 +20,11 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 cd "${ROOT}"
 
-# Every pushed branch: one of the six prefixes, then a kebab-case name.
+# Every pushed branch: one of the six prefixes, then a kebab-case name. Branches
+# authored by automation, not humans (dependabot/…), are exempt — their names are
+# not ours to choose; their commits still follow the subject rule.
 BRANCH_REGEX='^(feature|hotfix|chore|docs|ci|fix)/[a-z0-9][a-z0-9-]*[a-z0-9]$'
+BRANCH_EXEMPT_REGEX='^dependabot/'
 
 # Every commit subject and PR title: conventional type, optional scope, optional
 # breaking marker, colon, space, summary. Group 4 captures the summary.
@@ -44,6 +47,9 @@ USAGE
 
 check_branch() {
   local branch="$1"
+  if [[ "${branch}" =~ ${BRANCH_EXEMPT_REGEX} ]]; then
+    return 0
+  fi
   if [[ ! "${branch}" =~ ${BRANCH_REGEX} ]]; then
     echo "branch '${branch}' breaks the naming rule"
     echo "  expected ${BRANCH_REGEX}"

@@ -1,0 +1,14 @@
+# Weekly pnpm dependency updates (dev and runtime together; the lockfile is the
+# single surface). Dependabot's branch names (dependabot/…) are exempt from the
+# branch-naming rule on purpose — see docs/contributing.md. Its commits follow
+# "build: …" / "build(deps-dev): …", which the commit rule already accepts.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: build
+      prefix-development: build(deps-dev)
+    open-pull-requests-limit: 5

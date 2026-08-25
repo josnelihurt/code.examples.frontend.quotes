@@ -1,0 +1,108 @@
+name: contract-sync
+
+# The quotes contract under contracts/ is a snapshot of net-examples' frozen
+# document (docs/openapi/quotes-v1.openapi.yaml). This workflow is the snapshot's
+# tripwire: a scheduled job diffs the committed copy against the backend
+# repository's public raw URL — an HTTP read, deliberately not a submodule, so the
+# two repositories never recurse — and a manual dispatch refreshes the snapshot,
+# regenerates the client types and opens the sync PR for review.
+on:
+  schedule:
+    # Daily drift check (UTC); the backend freezes contracts rarely, so a day of
+    # lag between freeze and alarm is the normal worst case.
+    - cron: "17 12 * * *"
+  workflow_dispatch:
+    inputs:
+      sync:
+        description: "Refresh the snapshot and open a sync PR (off = drift-check only)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: contract-sync
+  cancel-in-progress: false
+
+env:
+  UPSTREAM_URL: https://raw.githubusercontent.com/josnelihurt/net-examples/main/docs/openapi/quotes-v1.openapi.yaml
+
+jobs:
+  drift:
+    name: contract drift vs net-examples
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Fetch the backend's frozen document
+        run: curl -fsSL "$UPSTREAM_URL" -o /tmp/upstream.openapi.yaml
+
+      - name: Fail when the committed snapshot drifted
+        run: |
+          set -euo pipefail
+          if diff -u contracts/quotes-v1.openapi.yaml /tmp/upstream.openapi.yaml; then
+            echo "The snapshot matches net-examples' frozen contract."
+            exit 0
+          fi
+          echo "::error::contracts/quotes-v1.openapi.yaml no longer matches net-examples' frozen document."
+          echo "Run this workflow again with the sync input enabled: it refreshes the"
+          echo "snapshot, regenerates src/api/schema.d.ts and opens the sync PR for review."
+          exit 1
+
+  sync:
+    name: refresh snapshot and open the sync pr
+    if: github.event_name == 'workflow_dispatch' && inputs.sync == true
+    runs-on: ubuntu-latest
+    permissions:
+      # Push the sync branch and open its PR; the PR itself merges only through the
+      # usual review + merge-me path, so a contract change is never self-landing.
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Fetch the backend's frozen document
+        run: curl -fsSL "$UPSTREAM_URL" -o /tmp/upstream.openapi.yaml
+
+      - name: Nothing to do when they still match
+        run: |
+          if diff -q contracts/quotes-v1.openapi.yaml /tmp/upstream.openapi.yaml >/dev/null; then
+            echo "The snapshot is already current — no sync PR needed."
+            echo "SKIP_SYNC=true" >> "$GITHUB_ENV"
+          fi
+
+      - name: Refresh snapshot and regenerate the client types
+        if: env.SKIP_SYNC != 'true'
+        run: |
+          set -euo pipefail
+          cp /tmp/upstream.openapi.yaml contracts/quotes-v1.openapi.yaml
+          pnpm install --frozen-lockfile
+          pnpm run gen:api
+
+      - name: Open the sync PR
+        if: env.SKIP_SYNC != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          branch="chore/contract-sync-$(date -u +%F)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add contracts/quotes-v1.openapi.yaml src/api/schema.d.ts
+          git commit -m "chore: sync the quotes contract snapshot"
+          git push origin "$branch"
+          gh pr create \
+            --title "chore: sync the quotes contract snapshot" \
+            --body "The frozen quotes contract in [net-examples](https://github.com/josnelihurt/net-examples) moved; this refreshes the snapshot under \`contracts/\` and regenerates \`src/api/schema.d.ts\` from it. Opened automatically by the contract-sync workflow (manual dispatch). Review the contract diff, then label \`merge-me\` to land it." \
+            --base main \
+            --head "$branch"

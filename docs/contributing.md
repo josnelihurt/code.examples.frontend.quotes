@@ -27,7 +27,9 @@ characters (digits allowed, e.g. a tracking issue number: `feature/msw-layer-2`)
 | `fix/` | non-urgent bug fixes |
 
 Exemptions: `main` itself, and `backup/…` branches — those are local-only
-snapshots the stacked-PR workflow (see [AGENTS.md](../AGENTS.md)) never pushes.
+snapshots the stacked-PR workflow (see [AGENTS.md](../AGENTS.md)) never pushes —
+and `dependabot/…` branches, whose names automation chooses for us (their
+commits still follow the commit rule).
 
 ## Commit messages
 
