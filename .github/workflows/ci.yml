@@ -138,7 +138,8 @@ jobs:
   # Ungated on purpose: the grep covers the whole tree and costs seconds. The seed
   # catalog's scaffolding credentials belong to the backend repository's seed
   # (net-examples docs/dev-credentials.md); here they may appear only in tests,
-  # e2e journeys and the MSW fixtures that stand in for that seed.
+  # e2e journeys, the MSW fixtures that stand in for that seed, and the agent
+  # instructions that operate those fixtures (same operational lane as tests).
   secrets-hygiene:
     name: secrets hygiene (credential literals stay in the allowlist)
     runs-on: ubuntu-latest
@@ -153,6 +154,7 @@ jobs:
             ':!**/bin/**' ':!**/obj/**' ':!pnpm-lock.yaml' \
             ':!.github/workflows/ci.yml' \
             ':!**/*.test.ts' ':!**/*.test.tsx' ':!e2e/**' ':!src/mocks/**' \
+            ':!.claude/agents/**' \
             || true)
           if [ -n "$hits" ]; then
             echo "Credential literals outside the allowlist:"
