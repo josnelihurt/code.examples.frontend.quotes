@@ -16,6 +16,7 @@ storybook-static
 
 # Playwright / playwright-bdd
 .features-gen
+.features-gen-full
 playwright-report
 test-results
 

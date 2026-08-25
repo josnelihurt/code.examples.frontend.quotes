@@ -4,8 +4,10 @@ Feature: Browsing quotes
   stable ordering.
 
   The page counts below assume the seeded catalog (8 quotes at 5 per page): this
-  feature alphabetically precedes publishing-quotes.feature, and the suite runs with
-  a single worker so scenarios cannot interleave and grow the catalog mid-feature.
+  feature alphabetically precedes publishing-quotes.feature. Isolation is per mode —
+  the full-stack suite shares one seeded database so it runs with a single worker;
+  the mocked suite gives every scenario its own fresh catalog via its browser
+  context. Either way, scenarios cannot grow the catalog mid-feature.
 
   Background:
     Given I am on the sign-in page
