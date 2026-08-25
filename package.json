@@ -24,8 +24,8 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
-    "react": "^19.2.1",
-    "react-dom": "^19.2.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2"
   },
   "devDependencies": {
@@ -37,7 +37,7 @@
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^24.10.1",
-    "@types/react": "^19.2.7",
+    "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.3",
     "@types/react-router-dom": "^5.3.3",
     "@vitejs/plugin-react": "^6.0.0",
