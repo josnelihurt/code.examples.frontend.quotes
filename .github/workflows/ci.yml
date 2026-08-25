@@ -31,7 +31,7 @@ jobs:
       pull-requests: read
     steps:
       # fetch-depth 0 because the action's push-to-main range mode reads history.
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
@@ -45,7 +45,7 @@ jobs:
     name: frontend (lint + tests + build)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # pnpm/action-setup reads the pinned version from packageManager in
       # package.json; it must run before setup-node (which needs the pnpm binary
@@ -83,7 +83,7 @@ jobs:
     name: e2e (mocked, Playwright + playwright-bdd)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.0.10
 
@@ -114,7 +114,7 @@ jobs:
     name: secrets hygiene (credential literals stay in the allowlist)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - uses: josnelihurt/code.examples.ci/secrets-hygiene@914ce2f68120ace140da1a445d44e854c97fb168 # v1
         with:
