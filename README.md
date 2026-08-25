@@ -106,7 +106,7 @@ src/components/  presentational components, each with a Storybook story
 src/mocks/       seed + MSW handlers + browser/node entry points
 e2e/             Gherkin features + playwright-bdd steps (shared by both modes)
 contracts/       frozen OpenAPI snapshot + drift machinery (CI + workflow)
-.github/         ci (conventions, lint/test/build, mocked e2e), contract-sync, merge-me
+.github/         ci (conventions, lint/test/build, mocked e2e, secrets hygiene), contract-sync, merge-me
 .claude/agents/  frontend-reviewer, test-author, contract-syncer
 ```
 
@@ -116,3 +116,23 @@ Branch names and commit messages follow hard rules enforced by CI; big changes
 land as stacked pull requests merged bottom-up by the `merge-me` workflow. The
 full reference is [docs/contributing.md](docs/contributing.md); the agent-facing
 summary is [AGENTS.md](AGENTS.md).
+
+### The squash-merge stack wedge
+
+When the bottom PR of a stack squash-merges, the layers above still carry its
+diff as real commits while the base carries the same diff as the squash, so
+GitHub reports them CONFLICTING and every atomic merge fails — this repository's
+bootstrap stack hit it twice. The repair is the one sanctioned exception to
+"never force-push mid-stack branches", bottom-up, one layer at a time (deinit
+the frontend submodule first if a rebase needs to cross the tree→gitlink
+boundary):
+
+```bash
+git fetch origin
+git rebase --onto origin/<base> <old-base-tip> <branch>
+git push --force-with-lease origin <branch>
+```
+
+The next event re-evaluates and merge-me lands the layer.
+[net-examples' README](https://github.com/josnelihurt/net-examples#the-squash-merge-stack-wedge)
+carries the full write-up.

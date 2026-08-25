@@ -63,8 +63,10 @@ The quickstart and the scripts table live in [README.md](../README.md).
 
 ## Decision and revisit trigger
 
-**2026-08-22 — researched and migrated in one change** (in the monorepo, before
-this repository was extracted from it); the posture carried over unchanged.
+**2026-08-22 — researched and migrated in one change.** The research happened in
+the net-examples monorepo and the migration is native history here: PR #3
+(`ef2955e`, "chore: replace npm with pnpm across the toolchain and ci") — the
+filter-repo extraction carried it into this repository's first commits.
 Rollback is a single revert — `package-lock.json` returns from git history.
 
 **Revisit when:** a supply-chain policy stricter than the defaults above becomes

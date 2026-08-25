@@ -87,9 +87,10 @@ commits' subjects, validating with the ` (#N)` suffix stripped.
 A repository ruleset requires a pull request, a green `conventions` check, and
 blocks force pushes and deletion before anything lands on `main`. It
 deliberately does **not** require approvals, "up to date" branches, or a merge
-queue: the merge-me automation merges with `GITHUB_TOKEN`, which cannot bypass
-branch protection, and stacked layers are rebased server-side when a lower
-layer merges.
+queue (the one approval-adjacent flag kept on is GitHub's default
+`require_extra_approval_for_unattributed_changes`): the merge-me automation
+merges with `GITHUB_TOKEN`, which cannot bypass branch protection, and stacked
+layers are rebased server-side when a lower layer merges.
 
 To recreate the ruleset after a repository reset:
 
@@ -107,7 +108,8 @@ gh api -X POST repos/{owner}/{repo}/rulesets --input - <<'JSON'
         "dismiss_stale_reviews_on_push": false,
         "require_code_owner_review": false,
         "require_last_push_approval": false,
-        "required_review_thread_resolution": false
+        "required_review_thread_resolution": false,
+        "require_extra_approval_for_unattributed_changes": true
       } },
     { "type": "required_status_checks",
       "parameters": {
@@ -133,7 +135,8 @@ git config --unset core.hooksPath   # undo
 - `commit-msg` validates the subject of the commit being created.
 - `pre-push` validates the branch name and every commit not yet on
   `origin/main` (the whole delta, so stacked branches are covered); `main`,
-  `backup/*` and tags are exempt.
+  and `backup/*` branches are exempt (the hook matches branch names; pushing a
+  tag from a feature branch still validates that branch).
 
 Pure git configuration — no package-manager lifecycle. CI enforces the same
 rules regardless of whether the hooks are installed.
