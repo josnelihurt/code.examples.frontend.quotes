@@ -97,6 +97,12 @@ jobs:
       # tsc -b only runs inside build; without this step type errors pass CI.
       - run: pnpm run build
 
+      # The SPA's API types are generated from the contract copy under contracts/ —
+      # a snapshot of net-examples' frozen docs/openapi document. Regenerate and
+      # fail if the committed schema drifted from that copy.
+      - run: pnpm run gen:api
+      - run: git diff --exit-code src/api/schema.d.ts
+
       # Storybook smoke: stories typecheck and build like any other frontend artifact.
       - run: pnpm run build-storybook
 
