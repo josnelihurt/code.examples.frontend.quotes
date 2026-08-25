@@ -52,7 +52,7 @@ If an intermediate level would be red, the split is wrong — redo the split.
    register the chain: `gh stack link <bottom-pr> … <top-pr>`.
 8. **Merging is bottom-up and automatic.** Labeling a reviewed PR `merge-me`
    hands it to the merge-me workflow (`.github/workflows/merge-me.yml`,
-   `scripts/merge-me.sh`), which merges green PRs itself — stack layers
+   the shared code.examples.ci `merge-me` action, which merges green PRs itself — stack layers
    atomically. Never merge by hand, never force-push mid-stack branches, never
    edit PR bases by hand.
 
