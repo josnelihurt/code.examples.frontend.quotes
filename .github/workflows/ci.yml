@@ -1,0 +1,127 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Superseded runs waste the browser-driven jobs; cancel them for PRs while
+# keeping every push to main.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+# Actions are pinned to commit SHAs (tag in the trailing comment) so a mutable-tag
+# takeover cannot run third-party code against the repository.
+jobs:
+  # Branch names, commit subjects and PR titles are rules about the change itself,
+  # not about the files it touches. Squash merges make the PR title the canonical
+  # commit on main, so the title is held to the commit rule. The same script backs
+  # the opt-in local hooks (scripts/setup-git-hooks.sh); the rules live in
+  # docs/contributing.md.
+  conventions:
+    name: conventions (branch names + commit messages)
+    runs-on: ubuntu-latest
+    permissions:
+      # The PR's commit list comes from the pulls API — a plain contents read is
+      # not enough for that call.
+      contents: read
+      pull-requests: read
+    steps:
+      # Full history for the push-to-main range (event.before..HEAD below); the
+      # PR path reads no local history at all.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Check branch name
+        if: github.event_name == 'pull_request'
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: ./scripts/check-conventions.sh --branch "${HEAD_REF}"
+
+      - name: Check commit subjects and PR title
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          if [[ "${EVENT_NAME}" == "pull_request" ]]; then
+            # GitHub's own list of the PR's commits. Stacked layers retargeted after
+            # a lower PR merges carry that layer as a commit with the squash subject
+            # ("type: ... (#N)") — the server-side rebase puts it on the branch — so
+            # such artifacts are skipped rather than failed; they are the base
+            # branch's history, not this PR's contribution.
+            subjects="$(mktemp)"
+            gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/commits" \
+              --jq '.[].commit.message | split("\n")[0]' > "${subjects}"
+            ./scripts/check-conventions.sh --subjects-file "${subjects}" --skip-pr-numbers --title "${PR_TITLE}"
+            rm -f "${subjects}"
+          else
+            # Push to main: the new commits are squash results ("type: ... (#N)").
+            if [[ "${BEFORE_SHA}" =~ ^0+$ ]]; then
+              BEFORE_SHA="$(git rev-parse HEAD^)"
+            fi
+            ./scripts/check-conventions.sh --range "${BEFORE_SHA}..HEAD" --allow-pr-number
+          fi
+
+  frontend:
+    name: frontend (lint + tests + build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      # pnpm/action-setup reads the pinned version from packageManager in
+      # package.json; it must run before setup-node (which needs the pnpm binary
+      # on PATH to locate the store for caching).
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm run lint
+
+      - run: pnpm test
+
+      # tsc -b only runs inside build; without this step type errors pass CI.
+      - run: pnpm run build
+
+      # Storybook smoke: stories typecheck and build like any other frontend artifact.
+      - run: pnpm run build-storybook
+
+  # Ungated on purpose: the grep covers the whole tree and costs seconds. The seed
+  # catalog's scaffolding credentials belong to the backend repository's seed
+  # (net-examples docs/dev-credentials.md); here they may appear only in tests,
+  # e2e journeys and the MSW fixtures that stand in for that seed.
+  secrets-hygiene:
+    name: secrets hygiene (credential literals stay in the allowlist)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Fail on credential literals outside the allowlist
+        run: |
+          set -euo pipefail
+          pattern='supersecret|readsecret'
+          hits=$(git grep -nE "$pattern" \
+            ':!**/bin/**' ':!**/obj/**' ':!pnpm-lock.yaml' \
+            ':!.github/workflows/ci.yml' \
+            ':!**/*.test.ts' ':!**/*.test.tsx' ':!e2e/**' ':!src/mocks/**' \
+            || true)
+          if [ -n "$hits" ]; then
+            echo "Credential literals outside the allowlist:"
+            echo "$hits"
+            echo "These literals belong to the backend seed; here they live only in tests, e2e journeys and MSW fixtures."
+            exit 1
+          fi

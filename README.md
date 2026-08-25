@@ -1,5 +1,13 @@
 # frontend
 
+> **Repository just extracted.** This SPA now lives in its own repository
+> ([net-examples-frontend](https://github.com/josnelihurt/net-examples-frontend)),
+> consumed by [net-examples](https://github.com/josnelihurt/net-examples) as a
+> pinned git submodule. This README is still the pre-extraction document: its
+> `../` links refer to that repository's tree and will be rewritten as part of
+> the bootstrap tracked in
+> [issue #1](https://github.com/josnelihurt/net-examples-frontend/issues/1).
+
 The `web` resource: a small React SPA that signs in against the Auth API and exercises the Quotes
 API from the outside — a random quote, the paginated catalog, and publishing a new quote. It exists
 to prove the contract end to end — one token, one correlation id, both quote transports — not to
