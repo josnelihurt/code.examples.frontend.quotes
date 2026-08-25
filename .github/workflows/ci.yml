@@ -116,19 +116,17 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - name: Fail on credential literals outside the allowlist
-        run: |
-          set -euo pipefail
-          pattern='supersecret|readsecret'
-          hits=$(git grep -nE "$pattern" \
-            ':!**/bin/**' ':!**/obj/**' ':!pnpm-lock.yaml' \
-            ':!.github/workflows/ci.yml' \
-            ':!**/*.test.ts' ':!**/*.test.tsx' ':!e2e/**' ':!src/mocks/**' \
-            ':!.claude/agents/**' \
-            || true)
-          if [ -n "$hits" ]; then
-            echo "Credential literals outside the allowlist:"
-            echo "$hits"
-            echo "These literals belong to the backend seed; here they live only in tests, e2e journeys and MSW fixtures."
-            exit 1
-          fi
+      - uses: josnelihurt/code.examples.ci/secrets-hygiene@914ce2f68120ace140da1a445d44e854c97fb168 # v1
+        with:
+          pattern: 'supersecret|readsecret'
+          exclude: |
+            **/bin/**
+            **/obj/**
+            pnpm-lock.yaml
+            .github/workflows/ci.yml
+            **/*.test.ts
+            **/*.test.tsx
+            e2e/**
+            src/mocks/**
+            .claude/agents/**
+          hint: 'These literals belong to the backend seed; here they live only in tests, e2e journeys and MSW fixtures.'
