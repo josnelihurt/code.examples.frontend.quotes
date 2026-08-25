@@ -2,6 +2,7 @@
 # esbuild: verifies/installs its platform binary; required by the Vite build.
 allowBuilds:
   esbuild: true
+  msw: false # postinstall is telemetry-only; deliberately not run
 
 # pnpm settings (this is a single-package root; no `packages:` entries).
 # Security posture — see docs/package-manager-security.md:
