@@ -4,9 +4,9 @@ name: merge-me
 # merge it once it is green, and to keep re-evaluating until then. Every evaluation
 # corresponds to a real event — the label, a push, a reopen, the ci workflow
 # completing — nothing runs on a timer (the scheduled sweep this design started
-# with was removed in review; see issue #33). Red PRs are held — the decision table
+# with was removed in review; see issue #7). Red PRs are held — the decision table
 # and the rejected alternatives (classic merge API and marketplace automerge actions
-# both break on stacked PRs) are documented in scripts/merge-me.sh and issue #33.
+# both break on stacked PRs) are documented in scripts/merge-me.sh and issue #7.
 on:
   pull_request:
     types: [labeled, synchronize, reopened]
@@ -20,7 +20,7 @@ on:
         required: false
 
 # Ephemeral per-run token: no stored credentials, and it cannot bypass branch
-# protection — if that is ever added, revisit with a merge queue (see issue #33).
+# protection — if that is ever added, revisit with a merge queue (see issue #7).
 permissions:
   contents: write
   pull-requests: write
