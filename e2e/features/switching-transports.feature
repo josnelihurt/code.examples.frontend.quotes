@@ -10,7 +10,7 @@ Feature: Switching transports
 
   Background:
     Given I am on the sign-in page
-    And I sign in as "jrb" with password "supersecret"
+    And I sign in as "jrb"
 
   Scenario: The v2 transport serves the whole journey
     When I switch the API version to "v2"
