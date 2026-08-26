@@ -20,6 +20,14 @@ export const Controllers: Story = {
   args: { version: 'v0' },
 };
 
+export const ProtoAdapter: Story = {
+  args: { version: 'v2' },
+};
+
+export const GrpcTranscoding: Story = {
+  args: { version: 'v3' },
+};
+
 export const SwitchingTransport: Story = {
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
@@ -27,5 +35,9 @@ export const SwitchingTransport: Story = {
     await expect(args.onChange).toHaveBeenCalledWith('v0');
     await userEvent.click(canvas.getByRole('radio', { name: 'v1 (minimal APIs)' }));
     await expect(args.onChange).toHaveBeenCalledWith('v1');
+    await userEvent.click(canvas.getByRole('radio', { name: 'v2 (proto + adapter)' }));
+    await expect(args.onChange).toHaveBeenCalledWith('v2');
+    await userEvent.click(canvas.getByRole('radio', { name: 'v3 (gRPC-JSON)' }));
+    await expect(args.onChange).toHaveBeenCalledWith('v3');
   },
 };

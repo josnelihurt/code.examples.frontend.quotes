@@ -1,14 +1,15 @@
 import { http, HttpResponse } from 'msw';
-import type { QuoteResponse } from '../api/client';
+import { API_VERSIONS, type QuoteResponse } from '../api/client';
 import { seededQuotes, seededUsers, type MockUser } from './seed';
 
 /**
- * The mocked quotes platform: one handler set covering the auth API and both quote
- * transports (v0 and v1 serve the same catalog, mirroring the backend's parity).
- * Domain rules reproduce the behaviors the suites assert on — invalid credentials,
- * the twelve-character text rule, the near-duplicate fingerprint guard and the
- * read-only account's missing write scope — with RFC 9457 problem bodies shaped
- * like the API's envelope (title/detail/errorCode, validation errors keyed by
+ * The mocked quotes platform: one handler set covering the auth API and all four quote
+ * transports (v0, v1 and v2 serve the same catalog and envelopes, mirroring the
+ * backend's parity; v3 serves it with the transcoding drift — gRPC status errors and
+ * 200 on create). Domain rules reproduce the behaviors the suites assert on — invalid
+ * credentials, the twelve-character text rule, the near-duplicate fingerprint guard
+ * and the read-only account's missing write scope — with RFC 9457 problem bodies
+ * shaped like the API's envelope (title/detail/errorCode, validation errors keyed by
  * error code).
  *
  * `createHandlers()` closes over a fresh catalog, so every consumer (test file,
@@ -21,6 +22,36 @@ function problem(status: number, body: Record<string, unknown>): Response {
     status,
     headers: { 'Content-Type': 'application/problem+json' },
   });
+}
+
+// v3's drift from the problem envelope: stock gRPC-JSON transcoding answers failures
+// with the gRPC status shape — {"code": <int>, "message": "..."} as plain JSON.
+const GRPC_CODES: Record<number, number> = {
+  400: 3, // INVALID_ARGUMENT
+  401: 16, // UNAUTHENTICATED
+  403: 7, // PERMISSION_DENIED
+  404: 5, // NOT_FOUND
+  409: 6, // ALREADY_EXISTS
+};
+
+/** The line the UI should show: the first validation reason, else the detail, else the title. */
+function problemReason(body: Record<string, unknown>): string {
+  const errors = body.errors as Record<string, string[]> | undefined;
+  const validation = errors ? Object.values(errors)[0]?.[0] : undefined;
+  return validation ?? (body.detail as string | undefined) ?? (body.title as string | undefined) ?? 'Request failed.';
+}
+
+/** Answers a failure the way the transport in `version` answers it. */
+type Fail = (status: number, body: Record<string, unknown>) => Response;
+
+function failWith(version: string | readonly string[] | undefined): Fail {
+  return version === 'v3'
+    ? (status, body) =>
+        HttpResponse.json(
+          { code: GRPC_CODES[status] ?? 13, message: problemReason(body) }, // 13 = INTERNAL
+          { status, headers: { 'Content-Type': 'application/json' } },
+        )
+    : problem;
 }
 
 function findByToken(authorization: string | null): MockUser | undefined {
@@ -40,7 +71,7 @@ function fingerprint(text: string): string {
 type VersionParams = Record<string, string | readonly string[] | undefined>;
 
 function requireVersion(params: VersionParams): boolean {
-  return params.version === 'v0' || params.version === 'v1';
+  return typeof params.version === 'string' && (API_VERSIONS as readonly string[]).includes(params.version);
 }
 
 const MIN_TEXT_LENGTH = 12;
@@ -57,17 +88,17 @@ export function createHandlers() {
   // that lacks the scope — the two halves of the authorization story the
   // publishing journeys assert on. The 403 body mirrors the API's example:
   // title and detail, no errorCode.
-  function authorize(request: Request, scope: string): Response | null {
+  function authorize(fail: Fail, request: Request, scope: string): Response | null {
     const user = findByToken(request.headers.get('Authorization'));
     if (!user) {
-      return problem(401, {
+      return fail(401, {
         title: 'Unauthorized',
         detail: 'A valid bearer token is required.',
         errorCode: 'auth.token_missing',
       });
     }
     if (!user.scopes.includes(scope)) {
-      return problem(403, {
+      return fail(403, {
         title: 'Forbidden',
         detail: 'The access token is missing the required scope (quotes:read or quotes:write).',
       });
@@ -100,10 +131,11 @@ export function createHandlers() {
     }),
 
     http.get('/api/:version/quotes', ({ params, request }) => {
+      const fail = failWith(params.version);
       if (!requireVersion(params)) {
-        return problem(404, { title: 'Not Found', errorCode: 'quote.not_found' });
+        return fail(404, { title: 'Not Found', errorCode: 'quote.not_found' });
       }
-      const denied = authorize(request, 'quotes:read');
+      const denied = authorize(fail, request, 'quotes:read');
       if (denied) {
         return denied;
       }
@@ -115,7 +147,7 @@ export function createHandlers() {
         !Number.isInteger(page) || page < 1 ||
         !Number.isInteger(pageSize) || pageSize < 1 || pageSize > MAX_PAGE_SIZE
       ) {
-        return problem(400, {
+        return fail(400, {
           title: 'One or more validation errors occurred.',
           errors: {
             'quote.invalid_page_request': [
@@ -133,17 +165,18 @@ export function createHandlers() {
     }),
 
     http.get('/api/:version/quotes/random', ({ params, request }) => {
+      const fail = failWith(params.version);
       if (!requireVersion(params)) {
-        return problem(404, { title: 'Not Found', errorCode: 'quote.not_found' });
+        return fail(404, { title: 'Not Found', errorCode: 'quote.not_found' });
       }
-      const denied = authorize(request, 'quotes:read');
+      const denied = authorize(fail, request, 'quotes:read');
       if (denied) {
         return denied;
       }
 
       const quote = catalog[Math.floor(Math.random() * catalog.length)];
       if (!quote) {
-        return problem(404, {
+        return fail(404, {
           title: 'Not Found',
           detail: 'Quote not found.',
           errorCode: 'quote.not_found',
@@ -153,10 +186,11 @@ export function createHandlers() {
     }),
 
     http.post('/api/:version/quotes', async ({ params, request }) => {
+      const fail = failWith(params.version);
       if (!requireVersion(params)) {
-        return problem(404, { title: 'Not Found', errorCode: 'quote.not_found' });
+        return fail(404, { title: 'Not Found', errorCode: 'quote.not_found' });
       }
-      const denied = authorize(request, 'quotes:write');
+      const denied = authorize(fail, request, 'quotes:write');
       if (denied) {
         return denied;
       }
@@ -165,7 +199,7 @@ export function createHandlers() {
       const text = typeof body.text === 'string' ? body.text : '';
       const author = typeof body.author === 'string' ? body.author : '';
       if (text.trim().length < MIN_TEXT_LENGTH) {
-        return problem(400, {
+        return fail(400, {
           title: 'One or more validation errors occurred.',
           errors: {
             'quote.text_too_short': [`The quote text must be at least ${MIN_TEXT_LENGTH} characters long.`],
@@ -174,7 +208,7 @@ export function createHandlers() {
         });
       }
       if (catalog.some((quote) => fingerprint(quote.text) === fingerprint(text))) {
-        return problem(409, {
+        return fail(409, {
           title: 'Conflict',
           detail: 'A near-identical quote already exists in the catalog.',
           errorCode: 'quote.duplicate_fingerprint',
@@ -183,7 +217,8 @@ export function createHandlers() {
 
       const created: QuoteResponse = { id: String(nextId++), text, author };
       catalog.push(created);
-      return HttpResponse.json(created, { status: 201 });
+      // v3's transcoding returns the created quote with 200 — no 201, no Location.
+      return HttpResponse.json(created, { status: params.version === 'v3' ? 200 : 201 });
     }),
   ];
 }

@@ -93,11 +93,11 @@ export function QuotesListPage() {
       {servedBy && <p className="muted">Served by: {servedBy}</p>}
 
       {data && <QuoteList quotes={data.items} />}
-      {data && data.totalPages > 0 && (
+      {data && (data.totalPages ?? 0) > 0 && (
         <Pager
-          page={data.page}
-          totalPages={data.totalPages}
-          totalItems={data.totalItems}
+          page={data.page ?? 1}
+          totalPages={data.totalPages ?? 0}
+          totalItems={data.totalItems ?? 0}
           onPrevious={() => setPage((current) => current - 1)}
           onNext={() => setPage((current) => current + 1)}
         />

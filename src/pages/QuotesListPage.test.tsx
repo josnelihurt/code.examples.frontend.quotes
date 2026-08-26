@@ -127,6 +127,22 @@ describe('QuotesListPage', () => {
     expect(screen.queryByRole('button', { name: 'Next page' })).toBeNull();
   });
 
+  it('defaults absent paging fields to no pager', async () => {
+    // v3's transcoding omits proto default values, so the paging numbers can be absent.
+    vi.spyOn(client, 'listQuotes').mockResolvedValue({
+      items: [{ id: '1', text: 'Simplicity is the ultimate sophistication.', author: 'Leonardo da Vinci' }],
+    });
+
+    render(
+      <MemoryRouter>
+        <QuotesListPage />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('Simplicity is the ultimate sophistication.')).toBeDefined();
+    expect(screen.queryByRole('button', { name: 'Next page' })).toBeNull();
+  });
+
   it('refetches from the first page when the version changes', async () => {
     const listQuotes = vi.spyOn(client, 'listQuotes').mockResolvedValue(page());
 
