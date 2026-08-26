@@ -2,9 +2,9 @@
 
 The Aspire Quotes SPA: a small React application that signs in against the Auth API
 and exercises the Quotes API from the outside — a random quote, the paginated
-catalog, publishing a new quote, and a v0/v1 transport switch on every quote page.
-It exists to prove the contract end to end — one token, one correlation id, both
-quote transports — not to demonstrate front-end architecture.
+catalog, publishing a new quote, and a four-transport switch (v0–v3) on every quote
+page. It exists to prove the contract end to end — one token, one correlation id,
+every quote transport — not to demonstrate front-end architecture.
 
 This repository is **frontend-focused and self-contained**: it carries its own CI,
 its own conventions, its own mock platform, and a snapshot of the API contract. The
@@ -81,6 +81,23 @@ schema, so client and contract cannot drift apart silently.
 The mock handlers (`src/mocks/`) mirror the same contract: the seed's eight
 quotes and two accounts, the twelve-character text rule, the near-duplicate
 fingerprint guard, the read-only scope, and the RFC 9457 problem envelope.
+
+## The transport switcher
+
+Every quote page carries a radio switch choosing which transport serves the quote
+use cases. All four share the paths (`/api/v{n}/quotes…`) and the success bodies;
+the choice is only about which serving technology to exercise.
+
+| Version | Transport | Notes |
+| --- | --- | --- |
+| `v0` | MVC controllers | the original stack |
+| `v1` | minimal APIs | the default |
+| `v2` | proto contract behind an adapter | wire-identical to v0/v1 — problem documents and all |
+| `v3` | stock gRPC-JSON transcoding | drifted: errors answer with the gRPC status envelope (`{"code": …, "message": …}` as plain JSON, not a problem document) and create returns `200` with the created quote instead of `201` + `Location` |
+
+The client absorbs the drift: `toApiError` (`src/api/client.ts`) surfaces the gRPC
+envelope's `message` when the error body is not a problem document, and the catalog
+page treats absent paging fields as proto defaults (first page, zero totals).
 
 ## Testing topology
 

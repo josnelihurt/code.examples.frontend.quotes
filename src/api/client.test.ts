@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { http } from 'msw';
 import { server } from '../mocks/server';
 import {
+  API_VERSIONS,
   ApiError,
   DEFAULT_API_VERSION,
   clearSession,
@@ -204,6 +205,18 @@ describe('getRandomQuote', () => {
 
     await expect(getRandomQuote()).rejects.toThrow('Quote request failed (503)');
   });
+
+  it('surfaces the gRPC status message from a v3 error envelope', async () => {
+    saveSession(loginResponse);
+    record('get', '/api/v3/quotes/random', () => json({ code: 5, message: 'Quote not found.' }, 404));
+
+    const failure = await getRandomQuote('v3').catch((err: unknown) => err);
+
+    expect(failure).toBeInstanceOf(ApiError);
+    expect((failure as ApiError).status).toBe(404);
+    expect((failure as ApiError).message).toBe('Quote not found. (404)');
+    expect((failure as ApiError).errorCode).toBeUndefined();
+  });
 });
 
 describe('api version selection', () => {
@@ -216,10 +229,10 @@ describe('api version selection', () => {
     expect(DEFAULT_API_VERSION).toBe('v1');
   });
 
-  it('round-trips the chosen version', () => {
-    setApiVersion('v0');
+  it.each(API_VERSIONS)('round-trips %s', (version) => {
+    setApiVersion(version);
 
-    expect(getApiVersion()).toBe('v0');
+    expect(getApiVersion()).toBe(version);
   });
 
   it('falls back to the default when the stored value is not a known version', () => {
@@ -230,14 +243,14 @@ describe('api version selection', () => {
 
   it('keeps the chosen version across sign out', () => {
     saveSession(loginResponse);
-    setApiVersion('v0');
+    setApiVersion('v3');
 
     clearSession();
 
-    expect(getApiVersion()).toBe('v0');
+    expect(getApiVersion()).toBe('v3');
   });
 
-  it.each(['v0', 'v1'] as const)('requests %s when asked for it explicitly', async (version) => {
+  it.each(API_VERSIONS)('requests %s when asked for it explicitly', async (version) => {
     saveSession(loginResponse);
     const seen = record('get', `/api/${version}/quotes/random`, () =>
       json({ id: '1', text: 'hello', author: 'someone' }),
@@ -390,6 +403,24 @@ describe('createQuote', () => {
     await createQuote({ text: 'Some valid quote text.', author: 'E2E Suite' });
 
     expect(seen[0].path).toBe('/api/v0/quotes');
+  });
+
+  it('serves the v3 drift through the mock platform', async () => {
+    await login('jrb', 'supersecret');
+    setApiVersion('v3');
+
+    const created = await createQuote({ text: 'The transcoded transport publishes too.', author: 'E2E Suite' });
+    expect(created.id).toBeTruthy();
+
+    const failure = await createQuote({ text: 'Talk is cheap. Show me the code.', author: 'E2E Suite' }).catch(
+      (err: unknown) => err,
+    );
+
+    // The conflict arrives as the gRPC status envelope; its message is the reason.
+    expect(failure).toBeInstanceOf(ApiError);
+    expect((failure as ApiError).status).toBe(409);
+    expect((failure as ApiError).message).toBe('A near-identical quote already exists in the catalog. (409)');
+    expect((failure as ApiError).errorCode).toBeUndefined();
   });
 
   it('rejects the read-only account for the missing write scope', async () => {

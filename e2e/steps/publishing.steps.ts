@@ -54,6 +54,10 @@ Then('the published quote is confirmed', async ({ page }) => {
   await expect(page.getByText('Published to the catalog.')).toBeVisible();
 });
 
+Then('the published quote was served by {string}', async ({ page }, version: string) => {
+  await expect(page.getByText(`Served by: ${version}`)).toBeVisible();
+});
+
 Then('the catalog lists the quote I published', async ({ page, quoteWorld }) => {
   await expect(page.getByText(quoteWorld.publishedText)).toBeVisible();
 });

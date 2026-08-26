@@ -99,7 +99,7 @@ describe('QuotePage', () => {
     expect((v1Radio as HTMLInputElement).checked).toBe(true);
   });
 
-  it.each(['v0', 'v1'] as const)('requests the quote from %s when selected', async (version) => {
+  it.each(client.API_VERSIONS)('requests the quote from %s when selected', async (version) => {
     const spy = vi.spyOn(client, 'getRandomQuote').mockResolvedValue({
       id: '8',
       text: 'Talk is cheap. Show me the code.',
@@ -107,7 +107,7 @@ describe('QuotePage', () => {
     });
 
     const page = renderPage();
-    fireEvent.click(version === 'v0' ? page.v0Radio : page.v1Radio);
+    fireEvent.click(screen.getByRole('radio', { name: new RegExp(`^${version} \\(`) }));
     fireEvent.click(page.fetchButton);
 
     await waitFor(() => expect(spy).toHaveBeenCalledWith(version));

@@ -19,9 +19,20 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
-      // Both quote versions live in the same service and the SPA can switch at request
-      // time; the v0 rule was missing, which broke the controllers radio under dev.
+      // All quote versions live in the same service and the SPA can switch at request
+      // time; every version segment needs its own rule or the un-proxied requests hit
+      // the dev server itself (that missing v0 rule once broke the controllers radio).
       '/api/v0/quotes': {
+        target: quotesTarget,
+        changeOrigin: true,
+        secure: false,
+      },
+      '/api/v2/quotes': {
+        target: quotesTarget,
+        changeOrigin: true,
+        secure: false,
+      },
+      '/api/v3/quotes': {
         target: quotesTarget,
         changeOrigin: true,
         secure: false,
