@@ -65,6 +65,7 @@ keeps stock `:5173` HMR so Aspire and `pnpm run dev` stay unchanged:
 | `VITE_HMR_HOST` | `hmr.host` (overrides derivation from origin) |
 | `VITE_HMR_CLIENT_PORT` | `hmr.clientPort` (browser-facing HMR port) |
 | `VITE_HMR_PROTOCOL` | `hmr.protocol` (`ws` or `wss`) |
+| `VITE_DEFAULT_API_VERSION` | the transport switcher's initial choice, baked into the browser bundle (must name a version — `v0`…`v3`; anything else keeps `v1`) |
 
 ## Stack
 
@@ -104,7 +105,7 @@ the choice is only about which serving technology to exercise.
 | Version | Transport | Notes |
 | --- | --- | --- |
 | `v0` | MVC controllers | the original stack |
-| `v1` | minimal APIs | the default |
+| `v1` | minimal APIs | the default (`VITE_DEFAULT_API_VERSION` pins another version per deployment) |
 | `v2` | proto contract behind an adapter | wire-identical to v0/v1 — problem documents and all |
 | `v3` | stock gRPC-JSON transcoding | drifted: errors answer with the gRPC status envelope (`{"code": …, "message": …}` as plain JSON, not a problem document) and create returns `200` with the created quote instead of `201` + `Location` |
 
