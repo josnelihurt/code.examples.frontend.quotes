@@ -17,11 +17,16 @@ export type ApiVersion = 'v0' | 'v1' | 'v2' | 'v3';
 
 export const API_VERSIONS: readonly ApiVersion[] = ['v0', 'v1', 'v2', 'v3'];
 
-export const DEFAULT_API_VERSION: ApiVersion = 'v1';
-
-function isApiVersion(value: string | null): value is ApiVersion {
-  return value !== null && (API_VERSIONS as readonly string[]).includes(value);
+function isApiVersion(value: string | null | undefined): value is ApiVersion {
+  return value != null && (API_VERSIONS as readonly string[]).includes(value);
 }
+
+// Vite bakes VITE_DEFAULT_API_VERSION into the bundle so a host whose backend
+// serves only some transports can pin the switcher's initial choice. Unset or
+// unknown values keep the stock v1.
+const envVersion = import.meta.env.VITE_DEFAULT_API_VERSION;
+
+export const DEFAULT_API_VERSION: ApiVersion = isApiVersion(envVersion) ? envVersion : 'v1';
 
 export function getApiVersion(): ApiVersion {
   const stored = sessionStorage.getItem(API_VERSION_KEY);

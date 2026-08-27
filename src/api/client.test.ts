@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { http } from 'msw';
 import { server } from '../mocks/server';
 import {
@@ -224,9 +224,33 @@ describe('api version selection', () => {
     sessionStorage.clear();
   });
 
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it('defaults to the minimal api version', () => {
     expect(getApiVersion()).toBe(DEFAULT_API_VERSION);
     expect(DEFAULT_API_VERSION).toBe('v1');
+  });
+
+  it('bakes VITE_DEFAULT_API_VERSION when it names a known version', async () => {
+    vi.resetModules();
+    vi.stubEnv('VITE_DEFAULT_API_VERSION', 'v3');
+
+    const baked = await import('./client');
+
+    expect(baked.DEFAULT_API_VERSION).toBe('v3');
+    expect(baked.getApiVersion()).toBe('v3');
+  });
+
+  it('keeps v1 when VITE_DEFAULT_API_VERSION names no known version', async () => {
+    vi.resetModules();
+    vi.stubEnv('VITE_DEFAULT_API_VERSION', 'v99');
+
+    const baked = await import('./client');
+
+    expect(baked.DEFAULT_API_VERSION).toBe('v1');
+    expect(baked.getApiVersion()).toBe('v1');
   });
 
   it.each(API_VERSIONS)('round-trips %s', (version) => {
