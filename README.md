@@ -53,6 +53,18 @@ Plain `pnpm run dev` runs the SPA without mocks and proxies `/api/*` to the
 code.examples.net.quotes checkout. Standalone, export those variables yourself or use
 `dev:mock`.
 
+When a host reaches the SPA through a reverse proxy (different ports, TLS, or a
+single edge origin), set the optional Vite knobs in `vite.config.ts` — all unset
+keeps stock `:5173` HMR so Aspire and `pnpm run dev` stay unchanged:
+
+| Variable | Effect |
+| --- | --- |
+| `VITE_DEV_ORIGIN` | `server.origin`; also derives HMR host/port/protocol when the `VITE_HMR_*` vars below are unset |
+| `VITE_SERVER_HOST` | `server.host` (`true` or an address — useful in containers) |
+| `VITE_HMR_HOST` | `hmr.host` (overrides derivation from origin) |
+| `VITE_HMR_CLIENT_PORT` | `hmr.clientPort` (browser-facing HMR port) |
+| `VITE_HMR_PROTOCOL` | `hmr.protocol` (`ws` or `wss`) |
+
 ## Stack
 
 | Concern | Choice |
