@@ -60,6 +60,7 @@ keeps stock `:5173` HMR so Aspire and `pnpm run dev` stay unchanged:
 | Variable | Effect |
 | --- | --- |
 | `VITE_DEV_ORIGIN` | `server.origin`; also derives HMR host/port/protocol when the `VITE_HMR_*` vars below are unset |
+| `VITE_BASE_PATH` | Vite `base` (e.g. `/app/` when the host mounts the SPA under a path; default `/`) |
 | `VITE_SERVER_HOST` | `server.host` (`true` or an address — useful in containers) |
 | `VITE_HMR_HOST` | `hmr.host` (overrides derivation from origin) |
 | `VITE_HMR_CLIENT_PORT` | `hmr.clientPort` (browser-facing HMR port) |

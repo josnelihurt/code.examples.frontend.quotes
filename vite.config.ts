@@ -11,6 +11,7 @@ const quotesTarget = process.env.QUOTES_API_HTTPS || process.env.QUOTES_API_HTTP
 // keeps stock Vite HMR on :5173.
 //
 //   VITE_DEV_ORIGIN       — server.origin (browser-facing URL for asset links)
+//   VITE_BASE_PATH        — Vite `base` (e.g. `/app/` behind a reverse proxy)
 //   VITE_SERVER_HOST      — server.host (`true` / `0.0.0.0` for containers)
 //   VITE_HMR_HOST         — hmr.host
 //   VITE_HMR_CLIENT_PORT  — hmr.clientPort (browser-facing HMR port)
@@ -78,6 +79,9 @@ function serverFromEnv(): ServerOptions {
 
 export default defineConfig({
   plugins: [react()],
+  // Hosts that mount the SPA under a path prefix (e.g. compose Traefik at /app/)
+  // set VITE_BASE_PATH; Aspire and plain `pnpm run dev` leave it unset → `/`.
+  base: process.env.VITE_BASE_PATH || '/',
   server: {
     ...serverFromEnv(),
     proxy: {
