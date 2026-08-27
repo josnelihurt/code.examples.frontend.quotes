@@ -1,6 +1,6 @@
-import { defineConfig, type ServerOptions } from 'vitest/config';
+import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
-import type { HmrOptions } from 'vite';
+import type { HmrOptions, ServerOptions } from 'vite';
 
 // Aspire WithReference injects AUTH_API_HTTP/HTTPS and QUOTES_API_HTTP/HTTPS for resources auth-api / quotes-api.
 const authTarget = process.env.AUTH_API_HTTPS || process.env.AUTH_API_HTTP;
