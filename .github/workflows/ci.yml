@@ -116,7 +116,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: josnelihurt/code.examples.ci/secrets-hygiene@914ce2f68120ace140da1a445d44e854c97fb168 # v1
+      - uses: josnelihurt/code.examples.ci/secrets-hygiene@5159e4edf67e480c067345edc3e7748adbdc109f # v1
         with:
           pattern: 'supersecret|readsecret'
           exclude: |
